@@ -1,0 +1,10 @@
+[
+    {
+        "caption": "View: Disable ToggleMinimapOnScroll",
+        "command": "disable_toggle_minimap_on_scroll"
+    },
+    {
+        "caption": "View: Enable ToggleMinimapOnScroll",
+        "command": "enable_toggle_minimap_on_scroll"
+    }
+]
