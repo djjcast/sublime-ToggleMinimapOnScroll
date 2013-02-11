@@ -6,11 +6,11 @@
     "toggle_minimap_on_scroll_duration_seconds": 2.5,
 
     // Samples per second taken to detect scroll
-    "viewport_position_samples_per_second": 10,
+    "viewport_position_samples_per_second": 7.5,
 
     // Set to false to disable minimap toggle on cursor line changes
-    "toggle_minimap_on_cursor_line_changed": true,
+    "toggle_minimap_on_cursor_line_changed": false,
 
     // Set to false to disable minimap toggle on view changes
-    "toggle_minimap_on_view_changed": true
+    "toggle_minimap_on_view_changed": false
 }
