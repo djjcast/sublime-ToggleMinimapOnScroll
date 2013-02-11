@@ -5,7 +5,6 @@ from time import sleep
 
 ignore_events = False
 ignore_count = 0
-active_view = None
 settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
 toggle_minimap_on_scroll_enabled = settings.get("toggle_minimap_on_scroll_by_default", True)
 
@@ -19,7 +18,7 @@ class SampleViewportPosition(sublime_plugin.TextCommand):
 
     def viewport_position_changed(self):
         viewport_position_changed = False
-        viewport_position_sample = active_view.viewport_position()
+        viewport_position_sample = self.view.viewport_position()
         if self.last_viewport_position_sample and viewport_position_sample[1] != self.last_viewport_position_sample[1]:
             viewport_position_changed = True
         self.last_viewport_position_sample = viewport_position_sample
@@ -28,12 +27,12 @@ class SampleViewportPosition(sublime_plugin.TextCommand):
     def toggle_minimap_for_duration(self):
         global ignore_events, ignore_count
         if not ignore_events:
-            active_view.window().run_command("toggle_minimap")
+            self.view.window().run_command("toggle_minimap")
             ignore_events = True
         else:
             ignore_count += 1
         settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
-        sublime.set_timeout(lambda: active_view.window().run_command("untoggle_minimap_on_timeout"),
+        sublime.set_timeout(lambda: sublime.active_window().run_command("untoggle_minimap_on_timeout"),
                             int(float(settings.get("toggle_minimap_on_scroll_duration_seconds", 2.5)) * 1000))
 
 
@@ -46,7 +45,8 @@ class ViewportPositionMonitor(Thread):
     def run(self):
         while True:
             if toggle_minimap_on_scroll_enabled:
-                sublime.set_timeout(lambda: active_view.run_command("sample_viewport_position"), 0)
+                sublime.set_timeout(
+                    lambda: sublime.active_window().active_view().run_command("sample_viewport_position"), 0)
             sublime.set_timeout(lambda: self.get_viewport_position_samples_per_second(), 0)
             sleep(self.sample_period)
 
@@ -60,7 +60,7 @@ if not "viewport_position_monitor" in globals():
 
 class UntoggleMinimapOnTimeout(sublime_plugin.WindowCommand):
     def run(self):
-        global ignore_events, ignore_count, toggle_minimap_on_scroll_enabled
+        global ignore_events, ignore_count
         if ignore_count:
             ignore_count -= 1
             return
@@ -83,14 +83,14 @@ class ToggleMinimapOnScroll(sublime_plugin.EventListener):
         settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
         if settings.get("toggle_minimap_on_cursor_line_changed", True) and \
            toggle_minimap_on_scroll_enabled and \
-           self.cursor_line_changed():
-            self.toggle_minimap_for_duration()
+           self.cursor_line_changed(view):
+            self.toggle_minimap_for_duration(view)
 
-    def cursor_line_changed(self):
+    def cursor_line_changed(self, view):
         cursor_line_changed = False
-        selection_begin_row = active_view.rowcol(active_view.sel()[0].begin())[0]
-        selection_end_row = active_view.rowcol(active_view.sel()[0].end())[0]
-        num_selection = len(active_view.sel())
+        selection_begin_row = view.rowcol(view.sel()[0].begin())[0]
+        selection_end_row = view.rowcol(view.sel()[0].end())[0]
+        num_selection = len(view.sel())
         if selection_begin_row != self.last_selection_begin_row or \
             selection_end_row != self.last_selection_end_row or \
             num_selection != self.last_num_selection:
@@ -101,24 +101,35 @@ class ToggleMinimapOnScroll(sublime_plugin.EventListener):
         return cursor_line_changed
 
     def on_activated(self, view):
-        global active_view
-        active_view = view
         if not self.startup_events_finished:  # ignore startup events
             return
         settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
         if settings.get("toggle_minimap_on_view_changed", True) and toggle_minimap_on_scroll_enabled:
-            self.toggle_minimap_for_duration()
+            self.toggle_minimap_for_duration(view)
 
-    def toggle_minimap_for_duration(self):
+    def toggle_minimap_for_duration(self, view):
         global ignore_events, ignore_count
         if not ignore_events:
-            active_view.window().run_command("toggle_minimap")
+            view.window().run_command("toggle_minimap")
             ignore_events = True
         else:
             ignore_count += 1
         settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
-        sublime.set_timeout(lambda: active_view.window().run_command("untoggle_minimap_on_timeout"),
+        sublime.set_timeout(lambda: sublime.active_window().run_command("untoggle_minimap_on_timeout"),
                             int(float(settings.get("toggle_minimap_on_scroll_duration_seconds", 2.5)) * 1000))
+
+    def on_deactivated(self, view):
+        self.untoggle_minimap(view)
+
+    def on_close(self, view):
+        self.untoggle_minimap(view)
+
+    def untoggle_minimap(self, view):
+        global ignore_events, ignore_count
+        if ignore_events:  # minimap is toggled
+            view.window().run_command("toggle_minimap")
+            ignore_count += 1
+            ignore_events = False
 
 
 class DisableToggleMinimapOnScroll(sublime_plugin.WindowCommand):
