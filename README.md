@@ -26,7 +26,7 @@ ToggleMinimapOnScroll toggles the minimap off after 2.5 seconds by default. Use 
 
     "toggle_minimap_on_scroll_duration_seconds": 2.5
 
-ToggleMinimapOnScroll takes 7.5 samples per second to detect scroll by default. Use the following variable to configure this sampling frequency:
+ToggleMinimapOnScroll takes 7.5 samples per second to detect scrolling by default. Use the following variable to configure this sampling frequency:
 
     "viewport_position_samples_per_second": 7.5
 
@@ -36,8 +36,8 @@ ToggleMinimapOnScroll can be configured to be activated on cursor line changes b
 
 ToggleMinimapOnScroll can be configured to be activated on view changes by setting the following variable to true:
 
-    "toggle_minimap_on_cursor_line_changed": false
+    "toggle_minimap_on_view_changed": false
 
 ## Commands
 
-ToggleMinimapOnScroll can be disabled/enabled through the command palette.
+ToggleMinimapOnScroll can be disabled/enabled via the command palette.
