@@ -16,7 +16,8 @@ def plugin_loaded():
 
 
 class SampleViewportPosition(sublime_plugin.TextCommand):
-    last_viewport_position_sample = None
+    last_viewport_position = None
+    last_viewport_extent = None
 
     def run(self, edit):
         if self.viewport_position_changed():
@@ -24,10 +25,12 @@ class SampleViewportPosition(sublime_plugin.TextCommand):
 
     def viewport_position_changed(self):
         viewport_position_changed = False
-        viewport_position_sample = self.view.viewport_position()
-        if self.last_viewport_position_sample and viewport_position_sample[1] != self.last_viewport_position_sample[1]:
+        viewport_position = self.view.viewport_position()
+        viewport_extent = self.view.viewport_extent()
+        if viewport_position != self.last_viewport_position and viewport_extent == self.last_viewport_extent:
             viewport_position_changed = True
-        self.last_viewport_position_sample = viewport_position_sample
+        self.last_viewport_position = viewport_position
+        self.last_viewport_extent = viewport_extent
         return viewport_position_changed
 
     def toggle_minimap_for_duration(self):
