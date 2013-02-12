@@ -1,6 +1,6 @@
 # ToggleMinimapOnScroll
 
-If you like the idea of Sublime Text 2's minimap, but don't like the screen real estate it takes up, then this package is for you.
+If you like the idea of Sublime Text's minimap, but don't like the screen real estate it takes up, then this package is for you.
 
 ToggleMinimapOnScroll toggles the minimap on when you're scrolling and toggles it off when you're not scrolling, after a user-configurable duration.
 

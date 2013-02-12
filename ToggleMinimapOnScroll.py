@@ -9,6 +9,12 @@ settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
 toggle_minimap_on_scroll_enabled = settings.get("toggle_minimap_on_scroll_by_default", True)
 
 
+def plugin_loaded():
+    global toggle_minimap_on_scroll_enabled
+    settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
+    toggle_minimap_on_scroll_enabled = settings.get("toggle_minimap_on_scroll_by_default", True)
+
+
 class SampleViewportPosition(sublime_plugin.TextCommand):
     last_viewport_position_sample = None
 
