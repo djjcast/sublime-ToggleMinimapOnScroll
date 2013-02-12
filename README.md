@@ -16,7 +16,7 @@ Manually toggle the minimap off, before scrolling, for ToggleMinimapOnScroll to 
 
 ## Settings
 
-ToggleMinimapOnScroll's settings are accessed via the Preferences->Package Settings->ToggleMinimapOnScroll menu.
+ToggleMinimapOnScroll's settings can be accessed via the Preferences->Package Settings->ToggleMinimapOnScroll menu.
 
 ToggleMinimapOnScroll is enabled by default. To disable it by default, set the following variable to false:
 
