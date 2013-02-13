@@ -16,8 +16,8 @@ def plugin_loaded():
 
 
 class SampleViewportPosition(sublime_plugin.TextCommand):
-    def __init__(self, edit):
-        super(SampleViewportPosition, self).__init__(edit)
+    def __init__(self, view):
+        super(SampleViewportPosition, self).__init__(view)
         self.last_viewport_position = None
         self.last_viewport_extent = None
 
