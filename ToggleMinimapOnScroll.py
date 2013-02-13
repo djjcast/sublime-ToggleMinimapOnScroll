@@ -15,6 +15,16 @@ def plugin_loaded():
     toggle_minimap_on_scroll_enabled = settings.get("toggle_minimap_on_scroll_by_default", True)
 
 
+class UntoggleMinimapOnTimeout(sublime_plugin.WindowCommand):
+    def run(self):
+        global ignore_events, ignore_count
+        if ignore_count:
+            ignore_count -= 1
+            return
+        self.window.run_command("toggle_minimap")
+        ignore_events = False
+
+
 class SampleViewportPosition(sublime_plugin.TextCommand):
     def __init__(self, view):
         super(SampleViewportPosition, self).__init__(view)
@@ -66,16 +76,6 @@ class ViewportPositionMonitor(Thread):
 if not "viewport_position_monitor" in globals():
     viewport_position_monitor = ViewportPositionMonitor()
     viewport_position_monitor.start()
-
-
-class UntoggleMinimapOnTimeout(sublime_plugin.WindowCommand):
-    def run(self):
-        global ignore_events, ignore_count
-        if ignore_count:
-            ignore_count -= 1
-            return
-        self.window.run_command("toggle_minimap")
-        ignore_events = False
 
 
 class ToggleMinimapOnScroll(sublime_plugin.EventListener):
