@@ -16,8 +16,10 @@ def plugin_loaded():
 
 
 class SampleViewportPosition(sublime_plugin.TextCommand):
-    last_viewport_position = None
-    last_viewport_extent = None
+    def __init__(self, edit):
+        super(SampleViewportPosition, self).__init__(edit)
+        self.last_viewport_position = None
+        self.last_viewport_extent = None
 
     def run(self, edit):
         if self.viewport_position_changed():
@@ -46,10 +48,9 @@ class SampleViewportPosition(sublime_plugin.TextCommand):
 
 
 class ViewportPositionMonitor(Thread):
-    sample_period = 0.1
-
     def __init__(self):
         Thread.__init__(self)
+        self.sample_period = 0.1
 
     def run(self):
         while True:
@@ -78,10 +79,12 @@ class UntoggleMinimapOnTimeout(sublime_plugin.WindowCommand):
 
 
 class ToggleMinimapOnScroll(sublime_plugin.EventListener):
-    startup_events_finished = False  # ignore startup events
-    last_selection_begin_row = None
-    last_selection_end_row = None
-    last_num_selection = None
+    def __init__(self):
+        super(ToggleMinimapOnScroll, self).__init__()
+        self.startup_events_finished = False  # ignore startup events
+        self.last_selection_begin_row = None
+        self.last_selection_end_row = None
+        self.last_num_selection = None
 
     def on_selection_modified(self, view):
         if not view.window():  # ignore startup events
