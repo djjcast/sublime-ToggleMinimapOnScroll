@@ -28,8 +28,8 @@ def untoggle_minimap(view):
         global ignore_events, ignore_count
         if ignore_events:
             view.window().run_command("toggle_minimap")
-            ignore_count += 1
             ignore_events = False
+            ignore_count += 1
 
 def untoggle_minimap_on_timeout():
     with lock:
@@ -48,25 +48,27 @@ def toggle_minimap():
             ignore_events = True
         else:
             ignore_count += 1
-        sublime.set_timeout(untoggle_minimap_on_timeout,
-                            int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
+        sublime.set_timeout(untoggle_minimap_on_timeout, int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
+
+prev_viewport_position = None
+prev_viewport_extent = None
+def viewport_scrolled():
+    global prev_viewport_position, prev_viewport_extent
+    viewport_scrolled = False
+    curr_viewport_position = sublime.active_window().active_view().viewport_position()
+    curr_viewport_extent = sublime.active_window().active_view().viewport_extent()
+    if curr_viewport_position != prev_viewport_position and curr_viewport_extent == prev_viewport_extent:
+        viewport_scrolled = True
+    prev_viewport_position = curr_viewport_position
+    prev_viewport_extent = curr_viewport_extent
+    return viewport_scrolled
 
 def sample_viewport():
-    if viewport_scrolled():
-        toggle_minimap()
-
-previous_viewport_position = None
-previous_viewport_extent = None
-def viewport_scrolled():
-    global previous_viewport_position, previous_viewport_extent
-    viewport_scrolled = False
-    viewport_position = sublime.active_window().active_view().viewport_position()
-    viewport_extent = sublime.active_window().active_view().viewport_extent()
-    if viewport_position != previous_viewport_position and viewport_extent == previous_viewport_extent:
-        viewport_scrolled = True
-    previous_viewport_position = viewport_position
-    previous_viewport_extent = viewport_extent
-    return viewport_scrolled
+    try:
+        if viewport_scrolled():
+            toggle_minimap()
+    except AttributeError:
+        pass  # suppress ignorable error message (window and/or view does not exist)
 
 class ViewportMonitor(Thread):
     sample_period = 1 / default_settings["toggle_minimap_on_scroll_samples_per_second"]
@@ -85,38 +87,34 @@ if not "viewport_monitor" in globals():
     viewport_monitor.start()
 
 class EventListener(sublime_plugin.EventListener):
-    startup_events_completed = False  # ignore startup events (Sublime Text 2)
-    previous_selection_begin_row = None
-    previous_selection_end_row = None
-    previous_num_selection = None
+    startup_events_triggered = False  # ignore startup events (Sublime Text 2)
+    prev_sel_begin_row = None
+    prev_sel_end_row = None
+    prev_num_sel = None
 
     def on_selection_modified(self, view):
         if not view.window():  # ignore startup events (Sublime Text 2)
             return
-        if not self.startup_events_completed:  # ignore startup events (Sublime Text 2)
-            self.startup_events_completed = True
+        if not self.startup_events_triggered:  # ignore startup events (Sublime Text 2)
+            self.startup_events_triggered = True
             return
-        if toggle_minimap_on_scroll_is_enabled and \
-           get_setting("toggle_minimap_on_cursor_line_changed") and \
-           self.cursor_line_changed(view):
+        if toggle_minimap_on_scroll_is_enabled and get_setting("toggle_minimap_on_cursor_line_changed") and self.cursor_line_changed(view):
             toggle_minimap()
 
     def cursor_line_changed(self, view):
         cursor_line_changed = False
-        selection_begin_row = view.rowcol(view.sel()[0].begin())[0]
-        selection_end_row = view.rowcol(view.sel()[0].end())[0]
-        num_selection = len(view.sel())
-        if selection_begin_row != self.previous_selection_begin_row or \
-            selection_end_row != self.previous_selection_end_row or \
-            num_selection != self.previous_num_selection:
+        curr_sel_begin_row = view.rowcol(view.sel()[0].begin())[0]
+        curr_sel_end_row = view.rowcol(view.sel()[0].end())[0]
+        curr_num_sel = len(view.sel())
+        if curr_sel_begin_row != self.prev_sel_begin_row or curr_sel_end_row != self.prev_sel_end_row or curr_num_sel != self.prev_num_sel:
             cursor_line_changed = True
-        self.previous_selection_begin_row = selection_begin_row
-        self.previous_selection_end_row = selection_end_row
-        self.previous_num_selection = num_selection
+        self.prev_sel_begin_row = curr_sel_begin_row
+        self.prev_sel_end_row = curr_sel_end_row
+        self.prev_num_sel = curr_num_sel
         return cursor_line_changed
 
     def on_activated(self, view):
-        if not self.startup_events_completed:  # ignore startup events (Sublime Text 2)
+        if not self.startup_events_triggered:  # ignore startup events (Sublime Text 2)
             return
         if toggle_minimap_on_scroll_is_enabled and get_setting("toggle_minimap_on_view_changed"):
             toggle_minimap()
@@ -125,7 +123,10 @@ class EventListener(sublime_plugin.EventListener):
         untoggle_minimap(view)
 
     def on_close(self, view):
-        untoggle_minimap(view)
+        try:
+            untoggle_minimap(view)
+        except AttributeError:
+            pass  # suppress ignorable error message (window does not exist)
 
 class DisableToggleMinimapOnScroll(sublime_plugin.WindowCommand):
     def run(self):
