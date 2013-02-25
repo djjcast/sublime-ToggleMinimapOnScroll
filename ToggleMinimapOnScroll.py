@@ -3,24 +3,21 @@ import sublime_plugin
 from threading import Thread, Lock
 from time import sleep
 
+default_settings = {
+    "toggle_minimap_on_scroll_enabled_by_default": True,
+    "toggle_minimap_on_scroll_duration_in_seconds": 2.5,
+    "toggle_minimap_on_scroll_samples_per_second": 7.5,
+    "toggle_minimap_on_cursor_line_changed": False,
+    "toggle_minimap_on_view_changed": False
+}
 def get_setting(name):
     settings = sublime.load_settings("ToggleMinimapOnScroll.sublime-settings")
-    if name == "toggle_minimap_on_scroll_by_default":
-        default = True
-    elif name == "toggle_minimap_on_scroll_duration_seconds":
-        default = 2.5
-    elif name == "viewport_position_samples_per_second":
-        default = 7.5
-    elif name == "toggle_minimap_on_cursor_line_changed":
-        default = False
-    elif name == "toggle_minimap_on_view_changed":
-        default = False
-    return settings.get(name, default)
+    return settings.get(name, default_settings[name])
 
-toggle_minimap_on_scroll_is_enabled = get_setting("toggle_minimap_on_scroll_by_default")
+toggle_minimap_on_scroll_is_enabled = get_setting("toggle_minimap_on_scroll_enabled_by_default")
 def plugin_loaded():
     global toggle_minimap_on_scroll_is_enabled
-    toggle_minimap_on_scroll_is_enabled = get_setting("toggle_minimap_on_scroll_by_default")
+    toggle_minimap_on_scroll_is_enabled = get_setting("toggle_minimap_on_scroll_enabled_by_default")
 
 ignore_events = False
 ignore_count = 0
@@ -52,7 +49,7 @@ def toggle_minimap():
         else:
             ignore_count += 1
         sublime.set_timeout(untoggle_minimap_on_timeout,
-                            int(float(get_setting("toggle_minimap_on_scroll_duration_seconds")) * 1000))
+                            int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
 
 def sample_viewport():
     if viewport_scrolled():
@@ -72,17 +69,17 @@ def viewport_scrolled():
     return viewport_scrolled
 
 class ViewportMonitor(Thread):
-    sample_period = 1 / 7.5
+    sample_period = 1 / default_settings["toggle_minimap_on_scroll_samples_per_second"]
 
     def run(self):
         while True:
             if toggle_minimap_on_scroll_is_enabled:
                 sublime.set_timeout(sample_viewport, 0)
-            sublime.set_timeout(self.get_viewport_position_samples_per_second, 0)
+            sublime.set_timeout(self.update_sample_period, 0)
             sleep(self.sample_period)
 
-    def get_viewport_position_samples_per_second(self):
-        self.sample_period = 1 / float(get_setting("viewport_position_samples_per_second"))
+    def update_sample_period(self):
+        self.sample_period = 1 / float(get_setting("toggle_minimap_on_scroll_samples_per_second"))
 if not "viewport_monitor" in globals():
     viewport_monitor = ViewportMonitor()
     viewport_monitor.start()

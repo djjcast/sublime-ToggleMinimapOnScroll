@@ -20,15 +20,15 @@ ToggleMinimapOnScroll's settings can be accessed via the Preferences->Package Se
 
 ToggleMinimapOnScroll is enabled by default. To disable it by default, set the following variable to false:
 
-    "toggle_minimap_on_scroll_by_default": true
+    "toggle_minimap_on_scroll_enabled_by_default": true
 
 ToggleMinimapOnScroll toggles the minimap off after 2.5 seconds by default. Use the following variable to configure this duration:
 
-    "toggle_minimap_on_scroll_duration_seconds": 2.5
+    "toggle_minimap_on_scroll_duration_in_seconds": 2.5
 
 ToggleMinimapOnScroll takes 7.5 samples per second to detect scrolling by default. Use the following variable to configure this sampling frequency:
 
-    "viewport_position_samples_per_second": 7.5
+    "toggle_minimap_on_scroll_samples_per_second": 7.5
 
 ToggleMinimapOnScroll can be configured to be activated on cursor line changes by setting the following variable to true:
 
