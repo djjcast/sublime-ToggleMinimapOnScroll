@@ -68,15 +68,18 @@ def toggle_minimap():
             ignore_count += 1
         sublime.set_timeout(untoggle_minimap_on_timeout, int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
 
+prev_view_id = None
 prev_viewport_position = None
 prev_viewport_extent = None
 def viewport_scrolled():
-    global prev_viewport_position, prev_viewport_extent
+    global prev_view_id, prev_viewport_position, prev_viewport_extent
     viewport_scrolled = False
+    curr_view_id = sublime.active_window().active_view().id()
     curr_viewport_position = sublime.active_window().active_view().viewport_position()
     curr_viewport_extent = sublime.active_window().active_view().viewport_extent()
-    if curr_viewport_position != prev_viewport_position and curr_viewport_extent == prev_viewport_extent:
+    if prev_view_id == curr_view_id and curr_viewport_position != prev_viewport_position and curr_viewport_extent == prev_viewport_extent:
         viewport_scrolled = True
+    prev_view_id = curr_view_id
     prev_viewport_position = curr_viewport_position
     prev_viewport_extent = curr_viewport_extent
     return viewport_scrolled
