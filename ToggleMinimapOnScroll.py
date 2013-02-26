@@ -19,15 +19,31 @@ def plugin_loaded():
     global toggle_minimap_on_scroll_is_enabled
     toggle_minimap_on_scroll_is_enabled = get_setting("toggle_minimap_on_scroll_enabled_by_default")
 
+lock = Lock()
 ignore_events = False
 ignore_count = 0
-lock = Lock()
+prev_wrap_width = None
+
+def unset_fixed_wrap_width(view=None):
+    if not view:
+        settings = sublime.active_window().active_view().settings()
+    else:
+        settings = view.settings()
+    settings.set("wrap_width", prev_wrap_width)
+
+def set_fixed_wrap_width():
+    global prev_wrap_width
+    settings = sublime.active_window().active_view().settings()
+    prev_wrap_width = settings.get("wrap_width", 0)
+    if not prev_wrap_width:
+        settings.set("wrap_width", sublime.active_window().active_view().viewport_extent()[0] / sublime.active_window().active_view().em_width())
 
 def untoggle_minimap(view):
     with lock:
         global ignore_events, ignore_count
         if ignore_events:
             view.window().run_command("toggle_minimap")
+            unset_fixed_wrap_width(view)
             ignore_events = False
             ignore_count += 1
 
@@ -38,12 +54,14 @@ def untoggle_minimap_on_timeout():
             ignore_count -= 1
             return
         sublime.active_window().run_command("toggle_minimap")
+        unset_fixed_wrap_width()
         ignore_events = False
 
 def toggle_minimap():
     with lock:
         global ignore_events, ignore_count
         if not ignore_events:
+            set_fixed_wrap_width()
             sublime.active_window().run_command("toggle_minimap")
             ignore_events = True
         else:
@@ -92,15 +110,6 @@ class EventListener(sublime_plugin.EventListener):
     prev_sel_end_row = None
     prev_num_sel = None
 
-    def on_selection_modified(self, view):
-        if not view.window():  # ignore startup events (Sublime Text 2)
-            return
-        if not self.startup_events_triggered:  # ignore startup events (Sublime Text 2)
-            self.startup_events_triggered = True
-            return
-        if toggle_minimap_on_scroll_is_enabled and get_setting("toggle_minimap_on_cursor_line_changed") and self.cursor_line_changed(view):
-            toggle_minimap()
-
     def cursor_line_changed(self, view):
         cursor_line_changed = False
         curr_sel_begin_row = view.rowcol(view.sel()[0].begin())[0]
@@ -112,6 +121,15 @@ class EventListener(sublime_plugin.EventListener):
         self.prev_sel_end_row = curr_sel_end_row
         self.prev_num_sel = curr_num_sel
         return cursor_line_changed
+
+    def on_selection_modified(self, view):
+        if not view.window():  # ignore startup events (Sublime Text 2)
+            return
+        if not self.startup_events_triggered:  # ignore startup events (Sublime Text 2)
+            self.startup_events_triggered = True
+            return
+        if toggle_minimap_on_scroll_is_enabled and get_setting("toggle_minimap_on_cursor_line_changed") and self.cursor_line_changed(view):
+            toggle_minimap()
 
     def on_activated(self, view):
         if not self.startup_events_triggered:  # ignore startup events (Sublime Text 2)
