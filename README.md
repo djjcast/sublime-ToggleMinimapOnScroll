@@ -14,6 +14,28 @@ Install via [Sublime Package Control](http://wbond.net/sublime_packages/package_
 
 Manually toggle the minimap off, before scrolling, for ToggleMinimapOnScroll to have the intended effect.
 
+The following pseudocode outlines the behavior states:
+
+    if ToggleMinimapOnScroll is enabled:
+        if minimap is shown:
+            minimap is hidden when scrolling
+        if minimap is hidden:
+            minimap is shown when scrolling
+    if ToggleMinimapOnScroll is disabled:
+        minimap has default behavior
+
+## Commands
+
+ToggleMinimapOnScroll can be disabled/enabled via the command palette.
+
+Use the following command to disable ToggleMinimapOnScroll:
+
+    View: Disable ToggleMinimapOnScroll
+
+Use the following command to enable ToggleMinimapOnScroll:
+
+    View: Enable ToggleMinimapOnScroll
+
 ## Settings
 
 ToggleMinimapOnScroll's settings can be accessed via the Preferences->Package Settings->ToggleMinimapOnScroll menu.
@@ -37,7 +59,3 @@ ToggleMinimapOnScroll can be configured to be activated on cursor line changes b
 ToggleMinimapOnScroll can be configured to be activated on view changes by setting the following variable to true:
 
     "toggle_minimap_on_view_changed": false
-
-## Commands
-
-ToggleMinimapOnScroll can be disabled/enabled via the command palette.
