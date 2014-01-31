@@ -77,7 +77,7 @@ def toggle_minimap():
             ignore_events = True
         else:
             ignore_count += 1
-        sublime.set_timeout(untoggle_minimap_on_timeout, int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
+        sublime.set_timeout(untoggle_minimap_on_timeout, get_setting("toggle_minimap_on_scroll_duration_in_seconds") * 1000)
 
 prev_active_view_id = None
 prev_viewport_states = {}
@@ -97,7 +97,7 @@ def viewport_scrolled():
                prev_viewport_states[view_id]['viewport_extent'] == viewport_extent:
                 viewport_scrolled = True
             curr_viewport_states[view_id] = {'viewport_position': viewport_position,
-                                                'viewport_extent': viewport_extent}
+                                             'viewport_extent': viewport_extent}
     prev_active_view_id = curr_active_view_id
     prev_viewport_states = curr_viewport_states
     return viewport_scrolled
@@ -110,7 +110,7 @@ def sample_viewport():
         pass  # suppress ignorable error message (window and/or view does not exist)
 
 class ViewportMonitor(Thread):
-    sample_period = 1 / default_settings["toggle_minimap_on_scroll_samples_per_second"]
+    sample_period = 1.0 / get_setting("toggle_minimap_on_scroll_samples_per_second")
 
     def run(self):
         while True:
@@ -120,7 +120,7 @@ class ViewportMonitor(Thread):
             sleep(self.sample_period)
 
     def update_sample_period(self):
-        self.sample_period = 1 / float(get_setting("toggle_minimap_on_scroll_samples_per_second"))
+        self.sample_period = 1.0 / get_setting("toggle_minimap_on_scroll_samples_per_second")
 if not "viewport_monitor" in globals():
     viewport_monitor = ViewportMonitor()
     viewport_monitor.start()
@@ -159,13 +159,15 @@ class EventListener(sublime_plugin.EventListener):
             toggle_minimap()
 
     def on_deactivated(self, view):
-        untoggle_minimap()
+        if toggle_minimap_on_scroll_is_enabled:
+            untoggle_minimap()
 
     def on_close(self, view):
-        try:
-            untoggle_minimap()
-        except AttributeError:
-            pass  # suppress ignorable error message (window does not exist)
+        if toggle_minimap_on_scroll_is_enabled:
+            try:
+                untoggle_minimap()
+            except AttributeError:
+                pass  # suppress ignorable error message (window does not exist)
 
 class DisableToggleMinimapOnScroll(sublime_plugin.WindowCommand):
     def run(self):
