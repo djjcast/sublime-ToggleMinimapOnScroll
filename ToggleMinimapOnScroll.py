@@ -77,7 +77,7 @@ def toggle_minimap():
             ignore_events = True
         else:
             ignore_count += 1
-        sublime.set_timeout(untoggle_minimap_on_timeout, get_setting("toggle_minimap_on_scroll_duration_in_seconds") * 1000)
+        sublime.set_timeout(untoggle_minimap_on_timeout, int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
 
 prev_active_view_id = None
 prev_viewport_states = {}
@@ -110,7 +110,7 @@ def sample_viewport():
         pass  # suppress ignorable error message (window and/or view does not exist)
 
 class ViewportMonitor(Thread):
-    sample_period = 1.0 / get_setting("toggle_minimap_on_scroll_samples_per_second")
+    sample_period = 1 / default_settings["toggle_minimap_on_scroll_samples_per_second"]
 
     def run(self):
         while True:
@@ -120,7 +120,7 @@ class ViewportMonitor(Thread):
             sleep(self.sample_period)
 
     def update_sample_period(self):
-        self.sample_period = 1.0 / get_setting("toggle_minimap_on_scroll_samples_per_second")
+        self.sample_period = 1 / float(get_setting("toggle_minimap_on_scroll_samples_per_second"))
 if not "viewport_monitor" in globals():
     viewport_monitor = ViewportMonitor()
     viewport_monitor.start()
