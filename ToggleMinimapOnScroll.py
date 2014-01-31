@@ -22,28 +22,39 @@ def plugin_loaded():
 lock = Lock()
 ignore_events = False
 ignore_count = 0
-prev_wrap_width = None
+prev_wrap_widths = {}
 
-def unset_fixed_wrap_width(view=None):
-    if not view:
-        settings = sublime.active_window().active_view().settings()
-    else:
-        settings = view.settings()
-    settings.set("wrap_width", prev_wrap_width)
+def unset_fixed_wrap_width():
+    for window in sublime.windows():
+        for view in window.views():
+            view_id = view.id()
+            if view_id in prev_wrap_widths:
+                view_settings = view.settings()
+                view_settings.set("wrap_width", prev_wrap_widths[view_id])
 
 def set_fixed_wrap_width():
-    global prev_wrap_width
-    settings = sublime.active_window().active_view().settings()
-    prev_wrap_width = settings.get("wrap_width", 0)
-    if not prev_wrap_width:
-        settings.set("wrap_width", sublime.active_window().active_view().viewport_extent()[0] / sublime.active_window().active_view().em_width())
+    global prev_wrap_widths
+    curr_wrap_widths = {}
+    for window in sublime.windows():
+        for view in window.views():
+            view_id = view.id()
+            view_settings = view.settings()
+            view_wrap_width = view_settings.get("wrap_width", 0)
+            if not view_wrap_width:
+                view_settings.set("wrap_width", view.viewport_extent()[0] / view.em_width())
+            curr_wrap_widths[view_id] = view_wrap_width
+    prev_wrap_widths = curr_wrap_widths
 
-def untoggle_minimap(view):
+def toggle_minimap_all_windows():
+    for window in sublime.windows():
+        window.run_command("toggle_minimap")
+
+def untoggle_minimap():
     with lock:
         global ignore_events, ignore_count
         if ignore_events:
-            view.window().run_command("toggle_minimap")
-            unset_fixed_wrap_width(view)
+            toggle_minimap_all_windows()
+            unset_fixed_wrap_width()
             ignore_events = False
             ignore_count += 1
 
@@ -53,7 +64,7 @@ def untoggle_minimap_on_timeout():
         if ignore_count:
             ignore_count -= 1
             return
-        sublime.active_window().run_command("toggle_minimap")
+        toggle_minimap_all_windows()
         unset_fixed_wrap_width()
         ignore_events = False
 
@@ -62,26 +73,33 @@ def toggle_minimap():
         global ignore_events, ignore_count
         if not ignore_events:
             set_fixed_wrap_width()
-            sublime.active_window().run_command("toggle_minimap")
+            toggle_minimap_all_windows()
             ignore_events = True
         else:
             ignore_count += 1
         sublime.set_timeout(untoggle_minimap_on_timeout, int(float(get_setting("toggle_minimap_on_scroll_duration_in_seconds")) * 1000))
 
-prev_view_id = None
-prev_viewport_position = None
-prev_viewport_extent = None
+prev_active_view_id = None
+prev_viewport_states = {}
 def viewport_scrolled():
-    global prev_view_id, prev_viewport_position, prev_viewport_extent
+    global prev_active_view_id, prev_viewport_states
     viewport_scrolled = False
-    curr_view_id = sublime.active_window().active_view().id()
-    curr_viewport_position = sublime.active_window().active_view().viewport_position()
-    curr_viewport_extent = sublime.active_window().active_view().viewport_extent()
-    if prev_view_id == curr_view_id and curr_viewport_position != prev_viewport_position and curr_viewport_extent == prev_viewport_extent:
-        viewport_scrolled = True
-    prev_view_id = curr_view_id
-    prev_viewport_position = curr_viewport_position
-    prev_viewport_extent = curr_viewport_extent
+    curr_active_view_id = sublime.active_window().active_view().id()
+    curr_viewport_states = {}
+    for window in sublime.windows():
+        for view in window.views():
+            view_id = view.id()
+            viewport_position = view.viewport_position()
+            viewport_extent = view.viewport_extent()
+            if prev_active_view_id == curr_active_view_id and \
+               view_id in prev_viewport_states and \
+               prev_viewport_states[view_id]['viewport_position'] != viewport_position and \
+               prev_viewport_states[view_id]['viewport_extent'] == viewport_extent:
+                viewport_scrolled = True
+            curr_viewport_states[view_id] = {'viewport_position': viewport_position,
+                                                'viewport_extent': viewport_extent}
+    prev_active_view_id = curr_active_view_id
+    prev_viewport_states = curr_viewport_states
     return viewport_scrolled
 
 def sample_viewport():
@@ -141,11 +159,11 @@ class EventListener(sublime_plugin.EventListener):
             toggle_minimap()
 
     def on_deactivated(self, view):
-        untoggle_minimap(view)
+        untoggle_minimap()
 
     def on_close(self, view):
         try:
-            untoggle_minimap(view)
+            untoggle_minimap()
         except AttributeError:
             pass  # suppress ignorable error message (window does not exist)
 
