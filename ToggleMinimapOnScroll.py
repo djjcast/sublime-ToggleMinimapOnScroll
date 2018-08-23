@@ -7,6 +7,7 @@ default_settings = {
     "toggle_minimap_on_scroll_enabled_by_default": True,
     "toggle_minimap_on_scroll_duration_in_seconds": 2.5,
     "toggle_minimap_on_scroll_samples_per_second": 7.5,
+    "toggle_minimap_on_vertical_scroll_only": False,
     "toggle_minimap_on_cursor_line_changed": False,
     "toggle_minimap_on_view_changed": False
 }
@@ -93,7 +94,9 @@ def viewport_scrolled():
             viewport_extent = view.viewport_extent()
             if prev_active_view_id == curr_active_view_id and \
                view_id in prev_viewport_states and \
-               prev_viewport_states[view_id]['viewport_position'] != viewport_position and \
+               (prev_viewport_states[view_id]['viewport_position'][1] != viewport_position[1] if \
+                get_setting("toggle_minimap_on_vertical_scroll_only") else \
+                prev_viewport_states[view_id]['viewport_position'] != viewport_position) and \
                prev_viewport_states[view_id]['viewport_extent'] == viewport_extent:
                 viewport_scrolled = True
             curr_viewport_states[view_id] = {'viewport_position': viewport_position,

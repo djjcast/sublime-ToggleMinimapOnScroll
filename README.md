@@ -52,6 +52,10 @@ ToggleMinimapOnScroll takes 7.5 samples per second to detect scrolling by defaul
 
     "toggle_minimap_on_scroll_samples_per_second": 7.5
 
+ToggleMinimapOnScroll can be configured to be activated on vertical scroll only by setting the following variable to true:
+
+    "toggle_minimap_on_vertical_scroll_only": false
+
 ToggleMinimapOnScroll can be configured to be activated on cursor line changes by setting the following variable to true:
 
     "toggle_minimap_on_cursor_line_changed": false

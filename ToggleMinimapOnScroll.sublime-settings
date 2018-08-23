@@ -8,6 +8,9 @@
     // Samples per second taken to detect scroll
     "toggle_minimap_on_scroll_samples_per_second": 7.5,
 
+    // Set to true to enable minimap toggle on vertical scroll only
+    "toggle_minimap_on_vertical_scroll_only": false,
+
     // Set to true to enable minimap toggle on cursor line changes
     "toggle_minimap_on_cursor_line_changed": false,
 
